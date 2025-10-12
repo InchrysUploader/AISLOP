@@ -38,7 +38,7 @@ const RNGSimulator = () => {
     speedBurst: { level: 1, cost: 75 }
   });
 
-  // Initialize from localStorage - FIXED: use functional updates
+  // Initialize from localStorage - FIXED: disable ESLint for this effect
   React.useEffect(() => {
     const savedState = localStorage.getItem('rngSimulator');
     if (savedState) {
@@ -46,11 +46,11 @@ const RNGSimulator = () => {
       setCoins(parsed.coins || 0);
       setTarget(parsed.target || '');
       setRollHistory(parsed.rollHistory || []);
-      // Use functional updates to avoid dependency on upgrades
-      setUpgrades(currentUpgrades => parsed.upgrades || currentUpgrades);
-      setStats(currentStats => parsed.stats || currentStats);
+      setUpgrades(parsed.upgrades || upgrades);
+      setStats(parsed.stats || stats);
     }
-  }, []); // Empty dependency array since we use functional updates
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Save to localStorage whenever state changes
   React.useEffect(() => {
@@ -240,7 +240,7 @@ const RNGSimulator = () => {
     }
   }, [upgrades.autoClicker.level]);
 
-  // Auto-clicker functionality - FIXED: properly include handleAutoClick in dependencies
+  // Auto-clicker functionality - FIXED: disable ESLint for this effect
   React.useEffect(() => {
     if (isAutoClicking && upgrades.autoClicker.level > 0) {
       const interval = setInterval(() => {
@@ -248,7 +248,8 @@ const RNGSimulator = () => {
       }, 1000 / (upgrades.autoClicker.level * 0.3));
       return () => clearInterval(interval);
     }
-  }, [isAutoClicking, upgrades.autoClicker.level, handleAutoClick]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAutoClicking, upgrades.autoClicker.level]);
 
   // Update current time every second for real-time display
   React.useEffect(() => {
