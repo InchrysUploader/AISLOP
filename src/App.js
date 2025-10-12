@@ -34,11 +34,11 @@ const RNGSimulator = () => {
   const [upgrades, setUpgrades] = React.useState({
     multiInstance: { level: 1, cost: 25 },
     autoClicker: { level: 0, cost: 100 },
-    coinMultiplier: { level: 1, cost: 50 }, // Now increases by 0.1 each level
+    coinMultiplier: { level: 1, cost: 50 },
     speedBurst: { level: 1, cost: 75 }
   });
 
-  // Initialize from localStorage
+  // Initialize from localStorage - FIXED: use functional updates
   React.useEffect(() => {
     const savedState = localStorage.getItem('rngSimulator');
     if (savedState) {
@@ -46,10 +46,11 @@ const RNGSimulator = () => {
       setCoins(parsed.coins || 0);
       setTarget(parsed.target || '');
       setRollHistory(parsed.rollHistory || []);
-      setUpgrades(parsed.upgrades || upgrades);
-      setStats(parsed.stats || stats);
+      // Use functional updates to avoid dependency on upgrades
+      setUpgrades(currentUpgrades => parsed.upgrades || currentUpgrades);
+      setStats(currentStats => parsed.stats || currentStats);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array since we use functional updates
 
   // Save to localStorage whenever state changes
   React.useEffect(() => {
@@ -78,13 +79,12 @@ const RNGSimulator = () => {
     if (!target) return 0;
     const digits = target.length;
     
-    // Much lower base rewards to balance coin multiplier
     const baseRewards = {
-      1: 2,   // 0-9: 2 coins (was 5)
-      2: 10,  // 0-99: 10 coins (was 50)
-      3: 50,  // 0-999: 50 coins (was 500)
-      4: 200, // 0-9999: 200 coins (was 2000)
-      5: 800, // 0-99999: 800 coins (was 10000)
+      1: 2,
+      2: 10,
+      3: 50,
+      4: 200,
+      5: 800,
     };
     
     return baseRewards[digits] || Math.floor(Math.pow(10, digits) * 0.1);
@@ -114,7 +114,6 @@ const RNGSimulator = () => {
       
       let reward = 0;
       if (isMatch) {
-        // Coin multiplier now increases by 0.1 each level, so level 1 = 1.1x, level 2 = 1.2x, etc.
         const multiplier = 1 + (upgrades.coinMultiplier.level * 0.1);
         reward = Math.floor(calculateBaseReward() * multiplier);
         coinsEarned += reward;
@@ -138,7 +137,6 @@ const RNGSimulator = () => {
       totalNumbersGenerated: prev.totalNumbersGenerated + instances
     }));
 
-    // Group this click's results together
     const groupedResults = {
       id: Date.now(),
       rolls: results,
@@ -210,7 +208,7 @@ const RNGSimulator = () => {
 
     setCoins(prev => prev - burstCost);
 
-    const burstCount = 8 + (upgrades.speedBurst.level - 1) * 3; // Fewer bursts
+    const burstCount = 8 + (upgrades.speedBurst.level - 1) * 3;
     for (let i = 0; i < burstCount; i++) {
       setTimeout(() => handleClick(), i * 50);
     }
@@ -225,7 +223,7 @@ const RNGSimulator = () => {
         ...prev,
         [upgradeType]: {
           level: upgrade.level + 1,
-          cost: Math.floor(upgrade.cost * 2.1) // Higher cost scaling
+          cost: Math.floor(upgrade.cost * 2.1)
         }
       }));
       setStats(prev => ({
@@ -242,12 +240,12 @@ const RNGSimulator = () => {
     }
   }, [upgrades.autoClicker.level]);
 
-  // Auto-clicker functionality
+  // Auto-clicker functionality - FIXED: properly include handleAutoClick in dependencies
   React.useEffect(() => {
     if (isAutoClicking && upgrades.autoClicker.level > 0) {
       const interval = setInterval(() => {
         handleAutoClick();
-      }, 1000 / (upgrades.autoClicker.level * 0.3)); // Slower auto-clicker
+      }, 1000 / (upgrades.autoClicker.level * 0.3));
       return () => clearInterval(interval);
     }
   }, [isAutoClicking, upgrades.autoClicker.level, handleAutoClick]);
@@ -359,7 +357,6 @@ const RNGSimulator = () => {
   // Render game tab
   const renderGame = () => (
     <>
-      {/* Target Input Section */}
       <div className="target-section card">
         <h2>Set Target Number</h2>
         <input
@@ -380,7 +377,6 @@ const RNGSimulator = () => {
         )}
       </div>
 
-      {/* Control Section */}
       <div className="control-section card">
         <button
           onClick={handleClick}
@@ -409,7 +405,6 @@ const RNGSimulator = () => {
         </button>
       </div>
 
-      {/* Upgrades Shop */}
       <div className="upgrades-section card">
         <h2>Upgrades Shop</h2>
         <div className="upgrades-grid">
@@ -463,7 +458,6 @@ const RNGSimulator = () => {
         </div>
       </div>
 
-      {/* Roll History */}
       <div className="history-section card">
         <h2>Recent Rolls</h2>
         <div className="roll-history">
@@ -515,7 +509,6 @@ const RNGSimulator = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
       <div className="tabs-section">
         <button 
           className={`tab-button ${activeTab === 'game' ? 'active' : ''}`}
